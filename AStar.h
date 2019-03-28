@@ -3,89 +3,110 @@
 
 #include <algorithm>
 #include <vector>
+#include <unordered_map>
 
 #include "Graph/Node.h"
-
-int DefaultHeuristic(Node* node, std::vector<Node*> path)
-{
-	Node* currentNode = node;
-	int distanceTaken = 0;
-
-	for (int i = path.size()-1; i >= 0; i-- )
-	{
-		Edge* currentEdge = &*std::find(currentNode->paths.begin(), currentNode->paths.end(), Edge(currentNode, path[i]));
-
-		distanceTaken += currentEdge->cost;
-	}
-
-	int totalCost = distanceTaken + node->estimatedCost;
-
-	return totalCost;
-}
 
 class AStar
 {
 public:
-	std::vector<Node*> path;
-	int (*HeuristicFunction)(Node* , std::vector<Node*>); // Heuristic Function Pointer
+	struct NodeCostPair
+	{
+		Node* node;
+		int totalCost;
+
+		bool operator<(const NodeCostPair& n) const 
+		{
+			return totalCost < n.totalCost;
+		}
+
+		bool operator==(const NodeCostPair& n) const
+		{
+			return (node == n.node) && (totalCost == n.totalCost);
+		}
+	};
+
+	std::unordered_map<Node*, Node*> previousNodeLookup;
+	std::unordered_map<Node*, int> currentCostLookup;
+	// int (*HeuristicFunction)(Node*); // Heuristic Function Pointer
 
 	std::vector<Node*> FindPath(Node* start, Node* end);
-	static bool NodeCompare(Node* node1, Node* node2);
 
-	AStar() { HeuristicFunction = &DefaultHeuristic; }
+	AStar() { /*HeuristicFunction = &DefaultHeuristic;*/ }
 	~AStar();
 private:
+	std::vector<Node*> ReconstructPathFrom(Node* end);
 
 };
-
-bool AStar::NodeCompare(Node* node1, Node* node2)
-{
-	return (HeuristicFunction(node1, path) - HeuristicFunction(node2, path)) > 0;
-}
 
 std::vector<Node*> AStar::FindPath(Node* start, Node* end)
 {
 	std::vector<Node*> evaluated = std::vector<Node*>();
-	std::vector<Node*> evaluating = std::vector<Node*>();
-	std::vector<Node*> path = std::vector<Node*>();
+	std::vector<NodeCostPair> evaluating = std::vector<NodeCostPair>();
 
-	evaluating.push_back(start);
+	evaluating.push_back((NodeCostPair){start, 0});
 
 	while (!evaluating.empty())
 	{
 		// Sort evaluating by lowest combined score
-		std::sort(evaluating.begin(), evaluating.end(), AStar::NodeCompare);
+		std::sort(evaluating.begin(), evaluating.end());
 
-		Node* currentNode = evaluating[0];// pick the lowest one
+		NodeCostPair* currentNodePair = &evaluating[0];// pick the lowest one
 
 		// Goal Check
-		if (currentNode == end)
+		if (currentNodePair->node == end)
 		{
-			return path;
+			return ReconstructPathFrom(end);
 		}
 
 		// Find and remove idiom
-		evaluating.erase(std::remove(evaluating.begin(), evaluating.end(), currentNode), evaluating.end());
-		
-		evaluated.push_back(currentNode);
+		evaluating.erase(std::remove(evaluating.begin(), evaluating.end(), *currentNodePair), evaluating.end());
+		evaluated.push_back(currentNodePair->node);
 
 		// Iterate through each neighbor, filter out the evaluated ones
-		for (int i = 0; i < currentNode->paths.size(); ++i)
+		for (int i = 0; i < currentNodePair->node->paths.size(); ++i)
 		{
-			Node* neighbor = currentNode->paths[i].end;
+			Edge* edgeToNeighbor = &currentNodePair->node->paths[i];
+			Node* neighborNode = edgeToNeighbor->end;
+			int neighborCost = currentCostLookup[currentNodePair->node] + edgeToNeighbor->cost;
 
-			if ( std::find(evaluated.begin(), evaluated.end(), neighbor) != evaluated.end() )
+			// If the neighbor does not have a cost recorded
+			// or if the current neighbor cost is less than recorded cost
+			// and if neighbor is not visited
+			if ((currentCostLookup.find(neighborNode) == currentCostLookup.end() ||
+				neighborCost < currentCostLookup[neighborNode]) &&
+				!(std::find(evaluated.begin(), evaluated.end(), neighborNode) != evaluated.end()))
 			{
-				continue;
-			}
+				currentCostLookup[neighborNode] = neighborCost;
+				int totalCost = neighborCost + neighborNode->estimatedCost;
 
-			if ( !(std::find(evaluating.begin(), evaluating.end(), neighbor) != evaluating.end()))	
-			{
-				evaluating.push_back(neighbor);
+				evaluating.push_back((NodeCostPair){neighborNode, neighborCost});
+
+				//Record Path
+				previousNodeLookup[neighborNode] = currentNodePair->node;
 			}
 		}
 	}
 }
 
+std::vector<Node*> AStar::ReconstructPathFrom(Node* end)
+{
+	Node* currentNode = end;
+	Node* previousNode = previousNodeLookup[currentNode];
+
+	std::vector<Node*> path;
+
+	while (previousNode != currentNode)
+	{
+		path.push_back(currentNode);
+
+		currentNode = previousNode;
+		previousNode = previousNodeLookup[currentNode];
+	}
+
+	std::reverse(path.begin(), path.end());
+
+	return path;
+}
 
 #endif

@@ -23,6 +23,9 @@ public:
 		return (start == e.start) && (end == e.end);
 	}
 
+	// Return the other end of the edge
+	Node* otherEnd(Node* input);
+
 private:
 };
 
@@ -40,5 +43,30 @@ public:
 
 private:
 };
+
+class Graph
+{
+public:
+	std::vector<Node*> nodes;
+
+	Graph();
+	Graph(std::vector<Node*> _nodes) { nodes = _nodes; }
+	~Graph();
+};
+
+Node* Edge::otherEnd(Node* input)
+{
+	if (start == input)
+	{
+		return end;
+	}
+
+	else if (end == input)
+	{
+		return start;
+	}
+
+	return NULL;
+}
 
 #endif
