@@ -18,6 +18,11 @@ public:
 	Edge(Node* _start, Node* _end, int _cost) { start = _start; end = _end; cost = _cost; }
 	~Edge();
 
+	bool operator==(const Edge& e)
+	{
+		return (start == e.start) && (end == e.end);
+	}
+
 private:
 };
 
