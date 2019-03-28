@@ -10,7 +10,7 @@
 // https://aiandgames.com/romania-graph1/
 TEST_CASE("Romania Graph")
 {
-	AStar pathFinder();
+	AStar pathFinder = AStar();
 
 	// Construct the romania graph nodes
 	Node* ara = new Node("Arad", 366);
