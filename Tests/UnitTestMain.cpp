@@ -10,7 +10,7 @@
 // https://aiandgames.com/romania-graph1/
 TEST_CASE("Romania Graph")
 {
-	AStar pathFinder = AStar();
+	AStar* pathFinder = new AStar();
 
 	// Construct the romania graph nodes
 	Node* ara = new Node("Arad", 366);
@@ -36,6 +36,7 @@ TEST_CASE("Romania Graph")
 
 	ara->paths.push_back(Edge(ara, zer, 75));
 	ara->paths.push_back(Edge(ara, tim, 118));
+	ara->paths.push_back(Edge(ara, sib, 140));
 
 	buc->paths.push_back(Edge(buc, giu, 90));
 	buc->paths.push_back(Edge(buc, urz, 85));
@@ -99,24 +100,40 @@ TEST_CASE("Romania Graph")
 	zer->paths.push_back(Edge(zer, ara, 75));
 	zer->paths.push_back(Edge(zer, ora, 71));
 
-	SECTION ("Craiova to Craiova")
+	SECTION ("Bucharest to Bucharest")
 	{
-		
+		pathFinder->Clear();		
+
+		std::vector<Node*> expectedResult = {buc};
+
+		REQUIRE(pathFinder->FindPath(buc, buc) == expectedResult);
+
 	}
 
-	SECTION ("Craiova to Dobreta")
+	SECTION ("Craiova to Bucharest")
 	{
+		pathFinder->Clear();
 
+		std::vector<Node*> expectedResult = {cra, pit, buc};
+
+		REQUIRE(pathFinder->FindPath(cra, buc) == expectedResult);
 	}
 
-	SECTION ("Arad to Neamt")
+	SECTION ("Arad to Bucharest")
 	{
-		
+		pathFinder->Clear();
 
+		std::vector<Node*> expectedResult = {ara, sib, rim, pit, buc};
+
+		REQUIRE(pathFinder->FindPath(ara, buc) == expectedResult);
 	}	
 
-	SECTION ("Eforie to Oradea")
+	SECTION ("Eforie to Bucharest")
 	{
+		pathFinder->Clear();
 
+		std::vector<Node*> expectedResult = {efo, hir, urz, buc};
+
+		REQUIRE(pathFinder->FindPath(efo, buc) == expectedResult);
 	}
 }

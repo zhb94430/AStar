@@ -16,7 +16,6 @@ public:
 	Edge();
 	Edge(Node* _start, Node* _end) { start = _start; end = _end; cost = std::numeric_limits<double>::quiet_NaN(); }
 	Edge(Node* _start, Node* _end, int _cost) { start = _start; end = _end; cost = _cost; }
-	~Edge();
 
 	bool operator==(const Edge& e)
 	{
@@ -39,7 +38,6 @@ public:
 	Node();
 	Node(std::string _name, int _estimatedCost) {name = _name; estimatedCost = _estimatedCost; }
 	Node(std::string _name, int _estimatedCost,std::vector<Edge> _paths) { paths = _paths; Node(_name, _estimatedCost); }
-	~Node();
 
 private:
 };
@@ -51,7 +49,6 @@ public:
 
 	Graph();
 	Graph(std::vector<Node*> _nodes) { nodes = _nodes; }
-	~Graph();
 };
 
 Node* Edge::otherEnd(Node* input)

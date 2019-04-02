@@ -33,7 +33,8 @@ public:
 	std::vector<Node*> FindPath(Node* start, Node* end);
 
 	AStar() { /*HeuristicFunction = &DefaultHeuristic;*/ }
-	~AStar();
+
+	void Clear();
 private:
 	std::vector<Node*> ReconstructPathFrom(Node* end);
 
@@ -41,49 +42,48 @@ private:
 
 std::vector<Node*> AStar::FindPath(Node* start, Node* end)
 {
-	std::vector<Node*> evaluated = std::vector<Node*>();
-	std::vector<NodeCostPair> evaluating = std::vector<NodeCostPair>();
-
-	evaluating.push_back((NodeCostPair){start, 0});
+	std::vector<Node*> evaluated{};
+	std::vector<NodeCostPair> evaluating{(NodeCostPair){start, 0}};
 
 	while (!evaluating.empty())
 	{
 		// Sort evaluating by lowest combined score
 		std::sort(evaluating.begin(), evaluating.end());
+		// std::reverse(evaluating.begin(), evaluating.end());
 
-		NodeCostPair* currentNodePair = &evaluating[0];// pick the lowest one
+		NodeCostPair currentNodePair = evaluating[0];// pick the lowest one
 
 		// Goal Check
-		if (currentNodePair->node == end)
+		if (currentNodePair.node == end)
 		{
 			return ReconstructPathFrom(end);
 		}
 
 		// Find and remove idiom
-		evaluating.erase(std::remove(evaluating.begin(), evaluating.end(), *currentNodePair), evaluating.end());
-		evaluated.push_back(currentNodePair->node);
+		evaluating.erase(std::remove(evaluating.begin(), evaluating.end(), currentNodePair), evaluating.end());
+		evaluated.push_back(currentNodePair.node);
 
 		// Iterate through each neighbor, filter out the evaluated ones
-		for (int i = 0; i < currentNodePair->node->paths.size(); ++i)
+		for (int i = 0; i < currentNodePair.node->paths.size(); ++i)
 		{
-			Edge* edgeToNeighbor = &currentNodePair->node->paths[i];
+			Edge* edgeToNeighbor = &currentNodePair.node->paths[i];
 			Node* neighborNode = edgeToNeighbor->end;
-			int neighborCost = currentCostLookup[currentNodePair->node] + edgeToNeighbor->cost;
+			int neighborCost = currentCostLookup[currentNodePair.node] + edgeToNeighbor->cost;
 
 			// If the neighbor does not have a cost recorded
 			// or if the current neighbor cost is less than recorded cost
 			// and if neighbor is not visited
-			if ((currentCostLookup.find(neighborNode) == currentCostLookup.end() ||
-				neighborCost < currentCostLookup[neighborNode]) &&
-				!(std::find(evaluated.begin(), evaluated.end(), neighborNode) != evaluated.end()))
+			if (((currentCostLookup.find(neighborNode) == currentCostLookup.end() ||
+				neighborCost < currentCostLookup[neighborNode])) &&
+				(!(std::find(evaluated.begin(), evaluated.end(), neighborNode) != evaluated.end())))
 			{
 				currentCostLookup[neighborNode] = neighborCost;
 				int totalCost = neighborCost + neighborNode->estimatedCost;
 
-				evaluating.push_back((NodeCostPair){neighborNode, neighborCost});
+				evaluating.push_back((NodeCostPair){neighborNode, totalCost});
 
 				//Record Path
-				previousNodeLookup[neighborNode] = currentNodePair->node;
+				previousNodeLookup[neighborNode] = currentNodePair.node;
 			}
 		}
 	}
@@ -107,6 +107,12 @@ std::vector<Node*> AStar::ReconstructPathFrom(Node* end)
 	std::reverse(path.begin(), path.end());
 
 	return path;
+}
+
+void AStar::Clear()
+{
+	previousNodeLookup.clear();
+	currentCostLookup.clear();
 }
 
 #endif
